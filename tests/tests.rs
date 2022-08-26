@@ -114,7 +114,24 @@ fn push_vec() {
 
     assert_eq!(buf_vec.len(), SIZE * 2);
 
+    buf_vec.push(1);
+
     println!("{}", buf_vec.capacity());
 
     //println!("{:?}", buf_vec);
+}
+
+#[test]
+fn pop_from_vec() {
+    let mut buf_vec = buffered_vec::BufferedVec::<usize>::with_capacity(SIZE, SIZE * 4);
+
+    for i in 0..SIZE * 3 {
+        buf_vec.push(i);
+    }
+
+    for i in (0..SIZE * 3).rev() {
+        assert_eq!(buf_vec.pop().unwrap(), i);
+    }
+
+    assert_eq!(buf_vec.len(), 0);
 }

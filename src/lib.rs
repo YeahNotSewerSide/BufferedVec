@@ -178,19 +178,6 @@ impl<T: Clone + Default> BufferedVec<T> {
         }
     }
 
-    fn last_non_empty(&self) -> Option<usize> {
-        if self.parts.len() == 0 {
-            return None;
-        }
-
-        for (bunch, index) in self.parts.iter().rev().zip((self.parts.len() - 1)..0) {
-            if bunch.filled() > 0 {
-                return Some(index);
-            }
-        }
-        None
-    }
-
     fn add_new_bunch(&mut self) {
         self.parts.push(Bunch::<T>::new(self.max_buffer_size));
     }
@@ -200,31 +187,29 @@ impl<T: Clone + Default> BufferedVec<T> {
             return;
         }
 
-        let bunch_index = match self.last_non_empty() {
-            Some(i) => i,
-            None => {
-                self.add_new_bunch();
-                self.parts.len() - 1
-            }
-        };
+        if self.parts.len() == 0 {
+            self.add_new_bunch();
+        }
 
-        let fbunch = unsafe { self.parts.get_unchecked_mut(bunch_index) };
+        let fbunch = unsafe { self.parts.get_unchecked_mut(self.last_non_empty) };
         if fbunch.filled > 0 {
             let sep_index = self.max_buffer_size - fbunch.filled;
             unsafe { fbunch.append_unchecked(&self.buffer.data[0..sep_index]) };
 
             let sbunch_index = self.parts.len();
-            if self.parts.len() == 0 || self.parts.len() - 1 == bunch_index {
+            if self.parts.len() - 1 == self.last_non_empty {
                 self.add_new_bunch();
                 let sbunch = unsafe { self.parts.get_unchecked_mut(sbunch_index) };
                 unsafe { sbunch.append_unchecked(&self.buffer.data[sep_index..]) };
             } else {
-                let sbunch = unsafe { self.parts.get_unchecked_mut(bunch_index + 1) };
+                let sbunch = unsafe { self.parts.get_unchecked_mut(self.last_non_empty + 1) };
                 unsafe { sbunch.append_unchecked(&self.buffer.data[sep_index..]) };
             }
+            self.last_non_empty += 1;
         } else {
             unsafe { fbunch.append_unchecked(&self.buffer.data) };
         }
+
         self.buffer.erase();
     }
 
@@ -235,6 +220,34 @@ impl<T: Clone + Default> BufferedVec<T> {
 
         self.buffer.push(value).unwrap();
         self.len += 1;
+    }
+
+    pub fn pop(&mut self) -> Option<T> {
+        if let Ok(v) = self.buffer.pop() {
+            self.len -= 1;
+            return Some(v);
+        }
+
+        if self.parts.len() == 0
+            || unsafe { self.parts.get_unchecked(self.last_non_empty) }.filled == 0
+        {
+            return None;
+        }
+
+        let to_return = unsafe {
+            self.parts
+                .get_unchecked_mut(self.last_non_empty)
+                .pop()
+                .unwrap_unchecked()
+        };
+        self.len -= 1;
+
+        if unsafe { self.parts.get_unchecked(self.last_non_empty) }.filled == 0
+            && self.last_non_empty != 0
+        {
+            self.last_non_empty -= 1;
+        }
+        Some(to_return)
     }
 
     pub fn len(&self) -> usize {
