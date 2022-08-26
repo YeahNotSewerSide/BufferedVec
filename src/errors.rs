@@ -22,4 +22,8 @@ pub mod bunch_errors {
     #[derive(Debug, Clone, Error)]
     #[error("Buffer is Filled")]
     pub struct BufferFilled {}
+
+    #[derive(Debug, Clone, Error)]
+    #[error("The slice is too big to fit")]
+    pub struct CantFitSlice {}
 }

@@ -1,98 +1,120 @@
 extern crate buffered_vec;
 
+const SIZE: usize = 10000;
+
 #[test]
 fn push_to_bunch() {
-    let size = 100000usize;
+    let mut bunch = buffered_vec::Bunch::<usize>::new(SIZE);
 
-    let mut bunch = buffered_vec::Bunch::<usize>::new(size);
-
-    for i in 0 as usize..size {
+    for i in 0 as usize..SIZE {
         bunch.push(i).unwrap();
     }
 
-    for i in 0 as usize..size {
-        assert_eq!(bunch.data[i], i);
+    for i in 0 as usize..SIZE {
+        assert_eq!(bunch.get(i).unwrap(), i);
     }
 
-    assert_eq!(bunch.filled, size);
+    assert_eq!(bunch.filled(), SIZE);
 }
 
 #[test]
 fn pop_from_bunch() {
-    let size = 100000usize;
+    let mut bunch = buffered_vec::Bunch::<usize>::new(SIZE);
 
-    let mut bunch = buffered_vec::Bunch::<usize>::new(size);
-
-    for i in 0 as usize..size {
+    for i in 0 as usize..SIZE {
         bunch.push(i).unwrap();
     }
 
-    for i in (0 as usize..size).rev() {
+    for i in (0 as usize..SIZE).rev() {
         assert_eq!(bunch.pop().unwrap(), i);
     }
 
-    assert_eq!(bunch.filled, 0);
+    assert_eq!(bunch.filled(), 0);
 }
 
 #[test]
 fn set_bunch() {
-    let size = 100000usize;
+    let mut bunch = buffered_vec::Bunch::<usize>::new(SIZE);
 
-    let mut bunch = buffered_vec::Bunch::<usize>::new(size);
-
-    for i in 0 as usize..size {
+    for i in 0 as usize..SIZE {
         bunch.push(i).unwrap();
     }
 
-    for i in (0 as usize..size).rev() {
+    for i in (0 as usize..SIZE).rev() {
         bunch.set(i, 255).unwrap();
     }
 
-    assert_eq!(bunch.filled, size);
+    assert_eq!(bunch.filled(), SIZE);
 
-    for _ in 0 as usize..size {
+    for _ in 0 as usize..SIZE {
         assert_eq!(bunch.pop().unwrap(), 255);
     }
 
-    assert_eq!(bunch.filled, 0);
+    assert_eq!(bunch.filled(), 0);
 }
 
 #[test]
 fn get_from_bunch() {
-    let size = 100000usize;
+    let mut bunch = buffered_vec::Bunch::<usize>::new(SIZE);
 
-    let mut bunch = buffered_vec::Bunch::<usize>::new(size);
-
-    for i in 0 as usize..size {
+    for i in 0 as usize..SIZE {
         bunch.push(i).unwrap();
     }
 
-    for i in 0 as usize..size {
+    for i in 0 as usize..SIZE {
         assert_eq!(bunch.get(i).unwrap(), i);
     }
 
-    assert_eq!(bunch.filled, size);
+    assert_eq!(bunch.filled(), SIZE);
 }
 
 #[test]
 fn remove_from_bunch() {
-    let size = 100000usize;
+    let mut bunch = buffered_vec::Bunch::<usize>::new(SIZE);
 
-    let mut bunch = buffered_vec::Bunch::<usize>::new(size);
-
-    for i in 0 as usize..size {
+    for i in 0 as usize..SIZE {
         bunch.push(i).unwrap();
     }
 
-    assert_eq!(bunch.remove(50).unwrap(), 50);
-    assert_eq!(bunch.filled, size - 1);
-    assert_ne!(bunch.get(50).unwrap(), 50);
+    let index = SIZE / 2;
 
-    for i in 0 as usize..50 {
+    assert_eq!(bunch.remove(index).unwrap(), index);
+    assert_eq!(bunch.filled(), SIZE - 1);
+    assert_ne!(bunch.get(index).unwrap(), index);
+
+    for i in 0 as usize..index {
         assert_eq!(bunch.get(i).unwrap(), i);
     }
 
-    for i in 50 as usize..size - 1 {
+    for i in index as usize..SIZE - 1 {
         assert_eq!(bunch.get(i).unwrap(), i + 1);
     }
+}
+
+#[test]
+fn insert_to_bunch() {
+    let mut bunch = buffered_vec::Bunch::<usize>::new(SIZE);
+
+    for i in 0..SIZE * 2 {
+        bunch.insert(0, i).unwrap();
+    }
+
+    for i in SIZE..SIZE * 2 {
+        assert_eq!(bunch.pop().unwrap(), i);
+    }
+}
+
+#[test]
+fn push_vec() {
+    let mut buf_vec = buffered_vec::BufferedVec::<usize>::new(SIZE);
+
+    for i in 0..SIZE * 2 {
+        buf_vec.push(i);
+    }
+
+    assert_eq!(buf_vec.len(), SIZE * 2);
+
+    println!("{}", buf_vec.capacity());
+
+    //println!("{:?}", buf_vec);
 }
