@@ -250,6 +250,37 @@ impl<T: Clone + Default> BufferedVec<T> {
         Some(to_return)
     }
 
+    pub fn get(&self, index: usize) -> Option<T> {
+        if index >= self.len {
+            return None;
+        }
+
+        let item_index = index % self.max_buffer_size;
+        let bunch_index = index / self.max_buffer_size;
+
+        if bunch_index <= self.last_non_empty {
+            if bunch_index == 0
+                && (self.parts.len() == 0
+                    || unsafe { self.parts.get_unchecked(bunch_index) }.filled == 0)
+            {
+                return Some(unsafe { self.buffer.data.get_unchecked(item_index) }.clone());
+            }
+            return Some(
+                unsafe {
+                    self.parts
+                        .get_unchecked(bunch_index)
+                        .data
+                        .get_unchecked(item_index)
+                }
+                .clone(),
+            );
+        } else if bunch_index == self.last_non_empty + 1 {
+            return Some(unsafe { self.buffer.data.get_unchecked(item_index) }.clone());
+        }
+
+        None
+    }
+
     pub fn len(&self) -> usize {
         self.len
     }

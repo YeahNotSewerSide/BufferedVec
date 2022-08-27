@@ -135,3 +135,29 @@ fn pop_from_vec() {
 
     assert_eq!(buf_vec.len(), 0);
 }
+
+#[test]
+fn get_from_vec() {
+    let mut buf_vec = buffered_vec::BufferedVec::<usize>::with_capacity(SIZE, SIZE * 4);
+
+    for i in 0..SIZE * 2 {
+        buf_vec.push(i);
+    }
+
+    for i in 0..SIZE * 2 {
+        assert_eq!(buf_vec.get(i), Some(i));
+    }
+
+    assert_eq!(buf_vec.get(SIZE * 2), None);
+
+    let mut buf_vec = buffered_vec::BufferedVec::<usize>::with_capacity(SIZE, SIZE * 4);
+    assert_eq!(buf_vec.get(1000), None);
+
+    for i in 0..SIZE {
+        buf_vec.push(i);
+    }
+
+    for i in 0..SIZE {
+        assert_eq!(buf_vec.get(i), Some(i));
+    }
+}
